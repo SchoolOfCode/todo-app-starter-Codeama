@@ -20,9 +20,9 @@
       const input = document.getElementById("input");
       const todosList = document.getElementById("todos");
 
-      const addTodo = () => {
+      const addTodo = async () => {
         const value = input.value;
-        fetch("/todos", {
+        const response = await fetch("/todos", {
           method: "POST",
           headers: {
             Accept: "application/json",
@@ -31,16 +31,22 @@
           body: JSON.stringify({
             title: value
           })
-        }).then(refreshTodos);
+        });
+        console.log(response);
+        if (response.status !== 201) {
+          const json = await response.json();
+          console.error(json.error);
+          return;
+        }
+        refreshTodos();
       };
 
-      const refreshTodos = () => {
+      const refreshTodos = async () => {
         todosList.innerHTML = "";
-        fetch("/todos")
-          .then(res => res.json())
-          .then(data => {
-            data.payload.map(createTodo);
-          });
+        const response = await fetch("/todos");
+        const data = await response.json();
+        console.log(data);
+        data.payload.forEach(createTodo);
       };
 
       const createTodo = todo => {
@@ -59,14 +65,20 @@
         todosList.appendChild(li);
       };
 
-      const updateCompleted = id => {
-        fetch(`/todos/${id}`, {
+      const updateCompleted = async id => {
+        const response = await fetch(`/todos/${id}`, {
           method: "PATCH",
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json"
           }
-        }).then(refreshTodos);
+        });
+        if (response.status !== 200) {
+          const json = await response.json();
+          console.error(json.error);
+          return;
+        }
+        refreshTodos();
       };
 
       refreshTodos();
